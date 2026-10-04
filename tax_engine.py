@@ -8,7 +8,7 @@ def calculate_individual_paye_tax(annual_income, rent_paid=0.0, pension_contrib=
     pension_contrib = float(pension_contrib)
     nhis_contrib = float(nhis_contrib)
 
-    if annual_income  0.0:
+        if annual_income <= 800000.0:
         total_tax += remaining_income * 0.25
 
     effective_rate = (total_tax / annual_income) * 100.0 if annual_income > 0.0 else 0.0
