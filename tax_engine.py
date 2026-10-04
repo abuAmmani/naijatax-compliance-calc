@@ -1,11 +1,14 @@
-def calculate_individual_paye_tax(annual_income):
+def calculate_individual_paye_tax(annual_income, rent_paid=0.0, pension_contrib=0.0, nhis_contrib=0.0):
     """
-    Calculates Personal Income Tax (PAYE) using the progressive tax bands 
-    mandated by the new Nigeria Tax Act 2025.
+    Calculates Personal Income Tax (PAYE) according to the progressive thresholds 
+    and allowable relief deductions of the Nigeria Tax Act 2025.
     """
     annual_income = float(annual_income)
-    if annual_income <= 800000.0:
+    rent_paid = float(rent_paid)
+    pension_contrib = float(pension_contrib)
+    nhis_contrib = float(nhis_contrib)
 
+    if annual_income  0.0:
         total_tax += remaining_income * 0.25
 
     effective_rate = (total_tax / annual_income) * 100.0 if annual_income > 0.0 else 0.0
@@ -13,11 +16,12 @@ def calculate_individual_paye_tax(annual_income):
     return {
         "entity_type": "Individual Employee",
         "annual_income": annual_income,
+        "statutory_reliefs": total_allowable_reliefs,
         "taxable_income": taxable_income,
         "effective_tax_rate": f"{effective_rate:.1f}%",
         "annual_paye_tax": total_tax,
         "monthly_paye_tax": total_tax / 12.0,
-        "notes": "Assessed via progressive PAYE rate thresholds (10% to 25% scale)."
+        "notes": f"Assessed via progressive PAYE scales. Total tax reliefs applied: ₦{total_allowable_reliefs:,.2f}."
     }
 
 

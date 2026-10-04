@@ -10,13 +10,12 @@ from langchain_classic.chains import create_retrieval_chain
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 
-# Load keys from local hidden .env file
 load_dotenv()
 
 st.set_page_config(page_title="NaijaTax AI Hub", page_icon="🏛️", layout="wide")
 
 st.title("🏛️ NaijaTax AI: Omnichannel Statutory Assessment Platform")
-st.write("Evaluate regulatory tax liabilities across individuals, small business brackets, and multi-tier conglomerates under the current **Nigeria Tax Act** framework.")
+st.write("Evaluate regulatory tax liabilities across individuals, dynamic relief allowances, and multi-tier business operations under the current **Nigeria Tax Act** framework.")
 st.markdown("---")
 
 DB_DIR = "tax_vector_db"
@@ -26,7 +25,6 @@ if not os.path.exists(DB_DIR):
 elif not os.environ.get("GROQ_API_KEY"):
     st.error("❌ Add your secure GROQ_API_KEY into your environment secrets portal.")
 else:
-    # Selection: Determine user category grouping
     tax_category = st.radio(
         "**Select Assessment Group Category:**",
         ["👤 Individual Employee / Salaried Earner", "🏢 Registered Corporate Entity (LLC / Business)"],
@@ -34,20 +32,32 @@ else:
     )
 
     gross_revenue, assessable_profit, fixed_assets, annual_income = 0.0, 0.0, 0.0, 0.0
+    rent_paid, pension_contrib, nhis_contrib = 0.0, 0.0, 0.0
     data_ready = False
     engine_mode = ""
 
     st.markdown("---")
     
     # -------------------------------------------------------------
-    # ROUTE A: INDIVIDUAL CALCULATION PANEL
+    # UPGRADED ROUTE A: INDIVIDUAL CALCULATION PANEL WITH NEW FIELDS
     # -------------------------------------------------------------
     if tax_category == "👤 Individual Employee / Salaried Earner":
         engine_mode = "individual"
         st.subheader("👤 Personal Income Tax (PAYE) Assessment Form")
-        input_income = st.number_input("Enter Total Gross Annual Earnings / Salary (₦):", min_value=0.0, step=50000.0, format="%.2f")
+        
+        i_col1, i_col2 = st.columns(2)
+        with i_col1:
+            input_income = st.number_input("Total Gross Annual Salary / Revenue (₦):", min_value=0.0, step=50000.0, format="%.2f")
+            input_pension = st.number_input("Annual Statutory Pension Contribution (8%) (₦):", min_value=0.0, step=10000.0, format="%.2f")
+        with i_col2:
+            input_rent = st.number_input("Total Annual Rent Paid (For Rent Relief Allowance) (₦):", min_value=0.0, step=50000.0, format="%.2f")
+            input_nhis = st.number_input("Annual Health Insurance (NHIS) Contribution (₦):", min_value=0.0, step=50000.0, format="%.2f")
+            
         if st.button("Calculate Personal Income Tax Report", use_container_width=True):
             annual_income = input_income
+            rent_paid = input_rent
+            pension_contrib = input_pension
+            nhis_contrib = input_nhis
             data_ready = True
 
     # -------------------------------------------------------------
@@ -85,27 +95,28 @@ else:
                 data_ready = True
 
     # -------------------------------------------------------------
-    # EXECUTE REPORT LAYOUTS & RAG
+    # RENDER COMMA REPORT LAYOUTS
     # -------------------------------------------------------------
     if data_ready:
         st.markdown("---")
         st.header("📊 Official Tax Assessment Summary Report")
         
         if engine_mode == "individual":
-            report = calculate_individual_paye_tax(annual_income)
+            report = calculate_individual_paye_tax(annual_income, rent_paid, pension_contrib, nhis_contrib)
             st.markdown(f"""
 
 | Parameter Metric Baseline | Values |
 | :--- | :--- |
 | **Assessed Entity Group** | {report['entity_type']} |
 | **Total Gross Annual Income** | ₦{report['annual_income']:,.2f} |
+| **Applied Statutory Deductions / Reliefs** | ₦{report['statutory_reliefs']:,.2f} |
 | **Calculated Taxable Net Baseline** | ₦{report['taxable_income']:,.2f} |
 | **Effective Tax Rate Percentage** | {report['effective_tax_rate']} |
 | **Total Annual PAYE Tax Liability** | **₦{report['annual_paye_tax']:,.2f}** |
 | **Estimated Monthly PAYE Deductions** | **₦{report['monthly_paye_tax']:,.2f}** |
 """)
             st.info(f"**Compliance Ingestion Note:** {report['notes']}")
-            query_input = f"Individual annual earnings: ₦{annual_income:,.2f}"
+            query_input = f"Individual earnings: ₦{annual_income:,.2f}, Relief allowances applied: ₦{report['statutory_reliefs']:,.2f}"
             
         else:
             report = calculate_nigerian_corporate_tax(gross_revenue, assessable_profit, fixed_assets)
