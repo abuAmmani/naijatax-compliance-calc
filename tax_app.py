@@ -10,6 +10,7 @@ from langchain_classic.chains import create_retrieval_chain
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 
+# Load keys from local hidden .env file
 load_dotenv()
 
 st.set_page_config(page_title="NaijaTax AI Hub", page_icon="🏛️", layout="wide")
@@ -25,7 +26,7 @@ if not os.path.exists(DB_DIR):
 elif not os.environ.get("GROQ_API_KEY"):
     st.error("❌ Add your secure GROQ_API_KEY into your environment secrets portal.")
 else:
-    # Top-Level Selection: Determine user category grouping
+    # Selection: Determine user category grouping
     tax_category = st.radio(
         "**Select Assessment Group Category:**",
         ["👤 Individual Employee / Salaried Earner", "🏢 Registered Corporate Entity (LLC / Business)"],
@@ -84,7 +85,7 @@ else:
                 data_ready = True
 
     # -------------------------------------------------------------
-    # EXECUTE COMMA-SEPARATED REPORT LAYOUTS & RAG
+    # EXECUTE REPORT LAYOUTS & RAG
     # -------------------------------------------------------------
     if data_ready:
         st.markdown("---")
@@ -94,15 +95,15 @@ else:
             report = calculate_individual_paye_tax(annual_income)
             st.markdown(f"""
 
-            | Parameter Metric Baseline | Values |
-            | :--- | :--- |
-            | **Assessed Entity Group** | `{report['entity_type']}` |
-            | **Total Gross Annual Income** | ₦{report['annual_income']:,.2f} |
-            | **Calculated Taxable Net Baseline** | ₦{report['taxable_income']:,.2f} |
-            | **Effective Tax Rate Percentage** | {report['effective_tax_rate']} |
-            | **Total Annual PAYE Tax Liability** | **₦{report['annual_paye_tax']:,.2f}** |
-            | **Estimated Monthly PAYE Deductions** | **₦{report['monthly_paye_tax']:,.2f}** |
-            """)
+| Parameter Metric Baseline | Values |
+| :--- | :--- |
+| **Assessed Entity Group** | {report['entity_type']} |
+| **Total Gross Annual Income** | ₦{report['annual_income']:,.2f} |
+| **Calculated Taxable Net Baseline** | ₦{report['taxable_income']:,.2f} |
+| **Effective Tax Rate Percentage** | {report['effective_tax_rate']} |
+| **Total Annual PAYE Tax Liability** | **₦{report['annual_paye_tax']:,.2f}** |
+| **Estimated Monthly PAYE Deductions** | **₦{report['monthly_paye_tax']:,.2f}** |
+""")
             st.info(f"**Compliance Ingestion Note:** {report['notes']}")
             query_input = f"Individual annual earnings: ₦{annual_income:,.2f}"
             
@@ -110,16 +111,16 @@ else:
             report = calculate_nigerian_corporate_tax(gross_revenue, assessable_profit, fixed_assets)
             st.markdown(f"""
 
-            | Parameter Metric Baseline | Values |
-            | :--- | :--- |
-            | **Assessed Entity Group** | `{report['entity_type']}` |
-            | **Classification Category Bracket** | `{report['company_tier']}` |
-            | **Aggregated Gross Revenue** | ₦{report['gross_revenue']:,.2f} |
-            | **Total Corporate Net Profit** | ₦{report['assessable_profit']:,.2f} |
-            | **Assessed Corporate Income Tax (CIT)** | **₦{report['corporate_income_tax']:,.2f}** ({report['cit_rate_applied']}) |
-            | **Assessed Development Levy Liability** | **₦{report['development_levy']:,.2f}** ({report['dev_levy_rate_applied']}) |
-            | **Total Consolidated Tax Liability** | **₦{report['total_tax_liability']:,.2f}** |
-            """)
+| Parameter Metric Baseline | Values |
+| :--- | :--- |
+| **Assessed Entity Group** | {report['entity_type']} |
+| **Classification Category Bracket** | {report['company_tier']} |
+| **Aggregated Gross Revenue** | ₦{report['gross_revenue']:,.2f} |
+| **Total Corporate Net Profit** | ₦{report['assessable_profit']:,.2f} |
+| **Assessed Corporate Income Tax (CIT)** | **₦{report['corporate_income_tax']:,.2f}** ({report['cit_rate_applied']}) |
+| **Assessed Development Levy Liability** | **₦{report['development_levy']:,.2f}** ({report['dev_levy_rate_applied']}) |
+| **Total Consolidated Tax Liability** | **₦{report['total_tax_liability']:,.2f}** |
+""")
             query_input = f"Corporate entity turnover: ₦{gross_revenue:,.2f}, Fixed assets: ₦{fixed_assets:,.2f}"
 
         # Trigger RAG Context Clauses Delivery
