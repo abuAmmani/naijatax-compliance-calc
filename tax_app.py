@@ -75,7 +75,7 @@ else:
             embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
             db = Chroma(persist_directory=DB_DIR, embedding_function=embeddings)
             retriever = db.as_retriever(search_kwargs={"k": 2})
-            llm = ChatGroq(model_name="llama3-8b-8192", temperature=0.1)
+            llm = ChatGroq(model_name="llama-3.1-8b-instant", temperature=0.1)
 
             system_prompt = "You are a Nigerian Tax Consultant. Review context:\n{context}\n\nQuestion: {user_query}"
             prompt = ChatPromptTemplate.from_template(system_prompt)
