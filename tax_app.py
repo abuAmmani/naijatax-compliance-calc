@@ -80,17 +80,14 @@ else:
             system_prompt = "You are a Nigerian Tax Consultant. Review context:\n{context}\n\nQuestion: {user_query}"
             prompt = ChatPromptTemplate.from_template(system_prompt)
             
-            # Format retrieved context documents into text
-            def format_docs(docs):
-                return "\n\n".join(doc.page_content for doc in docs)
+            # 1. Fetch relevant background strings from vector database explicitly
+            retrieved_docs = retriever.invoke(query_input)
+            context_text = "\n\n".join(doc.page_content for doc in retrieved_docs)
             
-            # Form modern cross-compatible chain execution loop using LCEL
-            rag_chain = (
-                {"context": retriever | format_docs, "user_query": RunnablePassthrough()}
-                | prompt
-                | llm
-                | StrOutputParser()
-            )
+            # 2. Package parameters cleanly into standard text string format mapping
+            final_prompt = prompt.format_messages(context=context_text, user_query=query_input)
             
-            response = rag_chain.invoke({"context": query_input, "user_query": query_input})
-            st.info(response)
+            # 3. Stream response output cleanly
+            response = llm.invoke(final_prompt)
+            st.info(response.content)
+
