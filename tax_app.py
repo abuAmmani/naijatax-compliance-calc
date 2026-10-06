@@ -92,5 +92,5 @@ else:
                 | StrOutputParser()
             )
             
-            response = rag_chain.invoke(query_input)
+            response = rag_chain.invoke({"context": query_input, "user_query": query_input})
             st.info(response)
