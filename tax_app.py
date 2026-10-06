@@ -6,9 +6,6 @@ from excel_parser import extract_financials_from_excel
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_groq import ChatGroq
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import RunnablePassthrough
-from langchain_core.output_parsers import StrOutputParser
 
 load_dotenv()
 
@@ -75,19 +72,17 @@ else:
             embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
             db = Chroma(persist_directory=DB_DIR, embedding_function=embeddings)
             retriever = db.as_retriever(search_kwargs={"k": 2})
-            llm = ChatGroq(model_name="mixtral-8x7b-32768", temperature=0.1)
-
-            system_prompt = "You are a Nigerian Tax Consultant. Review context:\n{context}\n\nQuestion: {user_query}"
-            prompt = ChatPromptTemplate.from_template(system_prompt)
             
-            # 1. Fetch relevant background strings from vector database explicitly
+            # Active production-ready model setup
+            llm = ChatGroq(model_name="llama-3.1-8b-instant", temperature=0.1)
+            
+            # 1. Force context chunk extraction strings
             retrieved_docs = retriever.invoke(query_input)
             context_text = "\n\n".join(doc.page_content for doc in retrieved_docs)
             
-            # 2. Package parameters cleanly into standard text string format mapping
-            final_prompt = prompt.format_messages(context=context_text, user_query=query_input)
+            # 2. Build simple text string sequence
+            system_prompt = f"You are a Nigerian Tax Consultant. Review context:\n{context_text}\n\nQuestion: {query_input}"
             
-            # 3. Stream response output cleanly
-            response = llm.invoke(final_prompt)
+            # 3. Stream text cleanly
+            response = llm.invoke(system_prompt)
             st.info(response.content)
-
