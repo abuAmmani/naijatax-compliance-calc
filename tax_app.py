@@ -74,7 +74,7 @@ else:
             retriever = db.as_retriever(search_kwargs={"k": 2})
             
             # Active production-ready model setup
-            llm = ChatGroq(model_name="llama-3.1-8b-instant", temperature=0.1)
+            llm = ChatGroq(model_name="llama-3.3-70b-specdec", temperature=0.1)
             
             # 1. Force context chunk extraction strings
             retrieved_docs = retriever.invoke(query_input)
