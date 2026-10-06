@@ -6,6 +6,8 @@ from excel_parser import extract_financials_from_excel
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_groq import ChatGroq
+from langchain_core.messages import HumanMessage
+
 
 load_dotenv()
 
@@ -81,7 +83,12 @@ else:
             context_text = "\n\n".join(doc.page_content for doc in retrieved_docs)
             
             # 2. Build simple text string sequence
-            system_prompt = f"You are a Nigerian Tax Consultant. Review context:\n{context_text}\n\nQuestion: {query_input}"
+            system_prompt = f"You are a Nigerian Tax Consultant analyzing the Nigeria Tax Act framework. Review context:\n{context_text}\n\nQuestion: {query_input}"
+            
+            # 3. Packaging explicitly into standard chat array layout components
+            response = llm.invoke([HumanMessage(content=system_prompt)])
+            st.info(response.content)
+
             
             # 3. Stream text cleanly
             response = llm.invoke(system_prompt)
