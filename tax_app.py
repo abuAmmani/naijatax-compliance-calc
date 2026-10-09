@@ -5,9 +5,7 @@ from tax_engine import calculate_nigerian_corporate_tax, calculate_individual_pa
 from excel_parser import extract_financials_from_excel
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
-from langchain_groq import ChatGroq
-from langchain_core.messages import HumanMessage
-
+from groq import Groq  # Direct native SDK bypass
 
 load_dotenv()
 
@@ -70,26 +68,28 @@ else:
             query_input = f"Corporate entity turnover: N{gross_revenue:,.2f}"
 
         st.markdown("---")
-        with st.spinner("Retrieving text chunks..."):
+        with st.spinner("Retrieving regulatory tax insights..."):
+            # 1. Standard text vector lookup
             embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
             db = Chroma(persist_directory=DB_DIR, embedding_function=embeddings)
             retriever = db.as_retriever(search_kwargs={"k": 2})
             
-            # Active production-ready model setup
-            llm = ChatGroq(model_name="llama-3.3-70b-versatile", temperature=0.1)
-            
-            # 1. Force context chunk extraction strings
             retrieved_docs = retriever.invoke(query_input)
             context_text = "\n\n".join(doc.page_content for doc in retrieved_docs)
             
-            # 2. Build simple text string sequence
-            system_prompt = f"You are a Nigerian Tax Consultant analyzing the Nigeria Tax Act framework. Review context:\n{context_text}\n\nQuestion: {query_input}"
+            # 2. Build explicit, clear systemic prompt context string
+            prompt_content = f"You are a Nigerian Tax Consultant analyzing the Nigeria Tax Act framework. Review context:\n{context_text}\n\nQuestion: {query_input}"
             
-            # 3. Packaging explicitly into standard chat array layout components
-            response = llm.invoke([HumanMessage(content=system_prompt)])
-            st.info(response.content)
-
+            # 3. Direct Native Groq Client Call (Zero middleware abstraction layers)
+            client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
             
-            # 3. Stream text cleanly
-            response = llm.invoke(system_prompt)
-            st.info(response.content)
+            completion = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[
+                    {"role": "user", "content": prompt_content}
+                ],
+                temperature=0.1
+            )
+            
+            # 4. Display result cleanly
+            st.info(completion.choices[0].message.content)
