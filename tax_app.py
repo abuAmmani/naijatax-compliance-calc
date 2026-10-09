@@ -84,7 +84,7 @@ else:
             client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
             
             completion = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model="llama-3.1-8b-instant",
                 messages=[
                     {"role": "user", "content": prompt_content}
                 ],
@@ -92,4 +92,4 @@ else:
             )
             
             # 4. Display result cleanly
-            st.info(completion.choices[0].message.content)
+            st.info(completion.choices.message.content)
